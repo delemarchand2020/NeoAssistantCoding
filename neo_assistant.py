@@ -101,9 +101,13 @@ def main():
     prompt = (
         f"Here is the current target repository context:\n\n{repo_context}\n\n"
         f"The goal of this session is:\n{goal}\n\n"
-        f"Draft a detailed action plan in Markdown format to achieve this goal. "
-        f"CRITICAL: The plan must only describe the conceptual steps, directories, files, and skeletons. "
-        f"DO NOT write any script code blocks, bash/powershell scripts, or actual program implementations inside the plan. Code and scripts must strictly be deferred to Phase 2."
+        f"Draft a detailed action plan. Your response MUST follow this exact structure:\n\n"
+        f"# Action Plan\n"
+        f"- List of folders to create\n"
+        f"- List of files to create or modify\n"
+        f"- Description of changes\n\n"
+        f"CRITICAL: DO NOT write any script code blocks, bash/powershell scripts, or actual program implementations inside the plan. "
+        f"Do not write any code implementation or code blocks in Phase 1."
     )
     
     plan_path = ""
@@ -148,13 +152,31 @@ def main():
     if config.shell == "cmd":
         script_ext = "bat"
         
+    if config.shell in ["powershell", "ps"]:
+        example_snippet = (
+            "# Example:\n"
+            "New-Item -ItemType Directory -Force -Path \"src\"\n"
+            "New-Item -ItemType File -Force -Path \"src/main.py\" -Value @\"\n"
+            "def main():\n"
+            "    pass\n"
+            "\"@"
+        )
+    else:
+        example_snippet = (
+            "# Example:\n"
+            "mkdir -p src\n"
+            "cat << 'EOF' > src/main.py\n"
+            "def main():\n"
+            "    pass\n"
+            "EOF"
+        )
+
     prompt = (
-        f"The action plan has been approved by the user. "
-        f"Now, generate a complete execution script in '{config.shell}' format to implement the planned changes. "
-        f"CRITICAL: The script must strictly use shell commands (like New-Item, Set-Content, etc. in PowerShell or mkdir, cat << 'EOF', etc. in Bash) to write files and folders onto the filesystem. Do NOT implement the game or application logic within the shell script itself. "
-        f"For example, if you are creating 'hangman.py', write a PowerShell command to create 'hangman.py' with the python content; do NOT implement the game in PowerShell. "
-        f"The script must be fully automated and executable. "
-        f"CRITICAL RULE: Return ONLY the raw shell script code. Do not include any conversational explanation before or after the code block."
+        f"The action plan has been approved by the user.\n"
+        f"Generate a complete execution script in '{config.shell}' format to write files to disk.\n"
+        f"Use this exact style to write files:\n\n{example_snippet}\n\n"
+        f"CRITICAL: The script must write files onto disk. Do NOT write a script that runs the program logic itself.\n"
+        f"CRITICAL RULE: Return ONLY the raw script code. Do not write any conversational text."
     )
     
     script_path = ""
