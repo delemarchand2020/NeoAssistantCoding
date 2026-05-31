@@ -1,0 +1,18 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# NeoAssistant sessions and backups
+sessions/
+test_sessions/
+
+# Projects test directory (used to avoid polluting workspace)
+projects/
+test_workspace/
+
+# Local LLM Binaries and Models
+LocalLLM/bin/
+
+# Local configs with private keys or custom routes
+config_local.json

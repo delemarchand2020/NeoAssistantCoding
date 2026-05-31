@@ -1,0 +1,13 @@
+{
+  "llm": {
+    "provider": "gemini",
+    "api_key": "ENV",
+    "model": "gemini-2.5-flash",
+    "api_url": "https://generativelanguage.googleapis.com/v1beta/models"
+  },
+  "shell": "powershell",
+  "skills_dir": "./skills",
+  "sessions_dir": "./sessions",
+  "max_file_size_kb": 100,
+  "max_context_chars": 50000
+}
