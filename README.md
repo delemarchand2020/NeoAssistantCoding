@@ -1,74 +1,71 @@
 # NeoAssistantCoding
 
-**NeoAssistantCoding** est un assistant de codage local en Python, conçu sans framework lourd et orienté vers la sécurité grâce à un principe d'approbation humaine systématique pour chaque action critique (Humain dans la boucle).
+**NeoAssistantCoding** is a secure, autonomous local AI coding assistant built in plain Python (standard library only, no agentic frameworks) enforcing a "Human-in-the-Loop" validation mechanism for every critical file or command operation.
 
 ## Architecture
 
-Le projet est structuré comme suit :
-- `neo_assistant.py` : Point d'entrée de la ligne de commande (CLI) et boucle d'orchestration.
-- `config.json` : Fichier de configuration JSON pour spécifier le modèle LLM, la clé API, le shell par défaut et les limites.
-- `skills/` : Dossier contenant les fichiers système Markdown (`neo_assistant_coding.md`, `architect.md`, `developer.md`, `git.md`).
-- `src/` : Modules Python internes :
-  - `config.py` : Chargement et validation de la configuration.
-  - `repo_scanner.py` : Scan récursif du dépôt cible respectant les exclusions standard et `.gitignore`.
-  - `llm_client.py` : Client API Gemini/OpenAI implémenté via `urllib.request` (aucune dépendance tierce).
-  - `session_manager.py` : Gestion des sessions, sauvegardes automatiques et archivage ZIP.
-  - `executor.py` : Exécution sécurisée des scripts et rollback.
+The project is structured as follows:
+- `neo_assistant.py`: Command Line Interface (CLI) entry point and interactive orchestration loops.
+- `config.json`: Configuration settings for LLMs, shell preferences, and file scanning constraints.
+- `skills/`: System markdown prompts/instructions (`neo_assistant_coding.md`, `architect.md`, `developer.md`, `git.md`).
+- `src/`: Core Python modules:
+  - `config.py`: Loads and parses configurations.
+  - `repo_scanner.py`: Scans the target workspace recursively while respecting `.gitignore`.
+  - `llm_client.py`: Calls Gemini or OpenAI API over direct `urllib.request` (zero dependencies).
+  - `session_manager.py`: Handles session workspace setups, target backups, rollbacks, and ZIP archiving.
+  - `executor.py`: Safely runs generated shell scripts.
 
 ---
 
 ## Configuration
 
-1. Ouvrez [config.json](file:///c:/Users/delem/ProjetsAntigravity/NeoAssistantCoding/config.json).
-2. Configurez vos paramètres :
-   - `llm.provider` : `"gemini"` ou `"openai"`
-   - `llm.api_key` : Votre clé API (ou `"ENV"` pour charger automatiquement depuis les variables d'environnement `GEMINI_API_KEY` ou `OPENAI_API_KEY`).
-   - `llm.model` : Nom du modèle (ex. `"gemini-2.5-flash"` ou `"gpt-4o"`).
-   - `shell` : Le shell utilisé pour exécuter les scripts (`"powershell"` ou `"bash"`).
+1. Open [config.json](file:///c:/Users/delem/ProjetsAntigravity/NeoAssistantCoding/config.json).
+2. Configure settings:
+   - `llm.provider`: `"gemini"` or `"openai"`
+   - `llm.api_key`: Your API key (or `"ENV"` to automatically resolve from environment variables `GEMINI_API_KEY` / `OPENAI_API_KEY`).
+   - `llm.model`: Model name (e.g. `"gemini-2.5-flash"`).
+   - `shell`: Shell environment to run scripts (`"powershell"` or `"bash"`).
+
+To run with a **Local LLM** (e.g. Qwen2.5-Coder-1.5B):
+1. Run the local model (see [LocalLLM/README_LOCAL.md](file:///c:/Users/delem/ProjetsAntigravity/LocalLLM/README_LOCAL.md)).
+2. Launch the assistant using `--config config_local.json`.
 
 ---
 
-## Utilisation
+## Usage
 
-Lancez l'assistant depuis votre console (PowerShell ou Bash) en spécifiant le mode et le dépôt cible :
+Run the assistant from your terminal by specifying the mode, target repository directory, and config file:
 
 ```bash
-python neo_assistant.py --mode [architect|developer|git] --repo [chemin/du/depot]
+python neo_assistant.py --mode [architect|developer|git] --repo [target_directory]
 ```
 
-### Options de Ligne de Commande
+### Options
 
-- `--mode` (Requis) : Choix du mode d'opération :
-  - `architect` : Aide à la conception architecturale de projets.
-  - `developer` : Écriture et modification de code source.
-  - `git` : Gestion du dépôt Git (branches, commits, etc.).
-- `--repo` (Requis) : Le chemin vers le dépôt sur lequel l'assistant doit travailler.
-- `--goal` (Optionnel) : L'objectif de la session (ex: `"Créer une classe d'authentification"`). S'il n'est pas fourni, l'assistant vous le demandera interactivement.
-- `--goal-file` (Optionnel) : Le chemin vers un fichier Markdown contenant l'objectif.
-- `--config` (Optionnel) : Chemin alternatif vers un fichier config JSON (défaut : `config.json`).
-
----
-
-## Fonctionnement Déterministe (Humain dans la boucle)
-
-1. **Scan et Contexte** : L'assistant scanne l'arborescence et le contenu du dépôt cible (en ignorant les éléments définis dans le `.gitignore` et les exclusions standards comme `node_modules` ou `.git`).
-2. **Phase 1 : Le Plan** : L'assistant génère un plan d'action au format Markdown et vous fournit un lien direct vers le fichier de plan. Vous pouvez :
-   - Entrer `OK` pour valider et passer à l'étape suivante.
-   - Entrer vos remarques pour demander une mise à jour du plan.
-   - Entrer `exit` pour quitter la session.
-3. **Phase 2 : Le Script** : L'assistant génère un script complet (`.sh` ou `.ps1`) et vous fournit le lien. Vous pouvez :
-   - Entrer `OK` pour autoriser l'exécution.
-   - Entrer vos remarques pour modifier le script.
-   - Entrer `exit` pour quitter la session.
-4. **Phase 3 : Exécution & Backup** : Avant de lancer le script, l'assistant copie tous les fichiers du dépôt dans un dossier de sauvegarde. Il exécute ensuite le script et vous affiche le journal d'exécution.
-5. **Phase 4 : Validation / Annulation (Rollback)** : L'assistant vous demande si vous souhaitez valider les changements ou faire un retour arrière (restauration de la sauvegarde).
-6. **Phase 5 : Archivage** : À la fin, un résumé de la session est créé et toute la session (contexte, plan, script, sauvegarde, résumé) est compressée dans un fichier `.zip` dans le dossier `sessions/`.
+- `--mode` (Required): Mode to operate:
+  - `architect`: Design directory layouts, empty file structures, module interfaces, and skeletons (no implementation logic).
+  - `developer`: Write, modify, and implement functional code.
+  - `git`: Manage branch checkouts, commits, and status checkups.
+- `--repo` (Required): Path to the target repository. Use the `projects/` directory to avoid workspace pollution.
+- `--goal` (Optional): Session goal description (e.g. `"Design a modular calculator"`). If omitted, you will be prompted.
+- `--goal-file` (Optional): Path to a markdown file containing the goal description.
+- `--config` (Optional): Path to a custom config JSON file (defaults to `config.json`).
 
 ---
 
-## Tests
+## Safety Features (Human-in-the-Loop)
 
-Pour lancer la suite de tests automatisée afin de vérifier le bon fonctionnement de l'assistant :
+1. **Phase 1: Action Plan Approval**: The LLM writes a markdown plan (`plan.md`). You can review it, comment to request modifications, or type `OK` to approve.
+2. **Phase 2: Script Approval**: The LLM writes an installation script (`script.ps1` or `script.sh`). The script MUST consist of file-writing commands (not program logic itself). Review it, comment to update, or type `OK` to approve.
+3. **Phase 3: Backup and Execute**: The target repository is backed up. The script is executed.
+4. **Phase 4: Rollback Prompt**: You are prompted to keep modifications or roll back to the original backup state.
+5. **Phase 5: Archive**: A ZIP archive containing context logs, the plan, the script, the backup, and a session summary is saved in `sessions/`.
+
+---
+
+## Testing
+
+Run the automated test suite to verify code integrations:
 
 ```bash
 python -m unittest test_neo_assistant.py
