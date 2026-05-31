@@ -77,6 +77,9 @@ def main():
     
     # 4. Scan Repository
     print(f"[*] Scanning target repository: {args.repo} ...")
+    if not os.path.exists(args.repo):
+        print(f"[*] Target repository path does not exist. Creating it: {args.repo}")
+        os.makedirs(args.repo, exist_ok=True)
     files_dict, tree_str = scan_repository(args.repo, config.max_file_size_kb)
     repo_context = format_context_for_llm(files_dict, tree_str)
     
@@ -98,7 +101,9 @@ def main():
     prompt = (
         f"Here is the current target repository context:\n\n{repo_context}\n\n"
         f"The goal of this session is:\n{goal}\n\n"
-        f"Draft a detailed action plan in Markdown format to achieve this goal."
+        f"Draft a detailed action plan in Markdown format to achieve this goal. "
+        f"CRITICAL: The plan must only describe the conceptual steps, directories, files, and skeletons. "
+        f"DO NOT write any script code blocks, bash/powershell scripts, or actual program implementations inside the plan. Code and scripts must strictly be deferred to Phase 2."
     )
     
     plan_path = ""
